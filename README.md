@@ -4,4 +4,4 @@ The application provides users with the ability to effortlessly create, manage, 
 
 One noteworthy feature of the app is its ability to detect overlapping events. In instances where a user attempts to schedule an event that conflicts with an existing one, the application issues a prompt to alert the user, preventing inadvertent scheduling conflicts. This ensures a smoother and more organized scheduling experience for the user.
 
-think to project :  https://myschedule1.netlify.app/
+link to project :  https://myschedule1.netlify.app/
