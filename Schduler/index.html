@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Scheduler</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            text-align: center;
+            margin: 20px;
+            background-color: #f8f8f8;
+        }
+
+        #app {
+            max-width: 400px;
+            margin: auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        input, select {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #4caf50;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        li {
+            background-color: #f0f0f0;
+            padding: 10px;
+            margin-bottom: 5px;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .event-text {
+            flex: 1;
+            margin-right: 10px;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+
+        .remove-event-select {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h1>Event Scheduler</h1>
+        <input v-model="newEvent.name" placeholder="Enter event" />
+        <input type="date" v-model="newEvent.date" />
+        <input type="time" v-model="newEvent.startTime" /> to
+        <input type="time" v-model="newEvent.endTime" />
+        <button @click="addEvent">Add Event</button>
+        <button @click="viewSchedule">View Schedule</button>
+
+        <ul>
+            <li v-for="(event, index) in events" :key="index">
+                <span class="event-text">{{ event.date }} {{ event.startTime }} - {{ event.endTime }} - {{ event.name }}</span>
+            </li>
+        </ul>
+
+        <label for="removeEvent" class="remove-event-select">Select Event to Remove:</label>
+        <select id="removeEvent" v-model="selectedEventIndex">
+            <option v-for="(event, index) in events" :key="index" :value="index">{{ event.name }} - {{ event.date }} {{ event.startTime }} - {{ event.endTime }}</option>
+        </select>
+        <button @click="removeSelectedEvent">Remove Selected Event</button>
+
+        <button @click="downloadSchedule">Download Schedule</button>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+    <script>
+        new Vue({
+            el: '#app',
+            data: {
+                newEvent: {
+                    name: '',
+                    date: '',
+                    startTime: '',
+                    endTime: ''
+                },
+                events: JSON.parse(localStorage.getItem('events')) || [],
+                selectedEventIndex: null
+            },
+            methods: {
+                addEvent: function() {
+                    if (
+                        this.newEvent.name.trim() !== '' &&
+                        this.newEvent.date !== '' &&
+                        this.newEvent.startTime !== '' &&
+                        this.newEvent.endTime !== ''
+                    ) {
+                        if (this.isAvailable(this.newEvent)) {
+                            this.events.push({
+                                name: this.newEvent.name,
+                                date: this.newEvent.date,
+                                startTime: this.newEvent.startTime,
+                                endTime: this.newEvent.endTime
+                            });
+                            this.newEvent = { name: '', date: '', startTime: '', endTime: '' };
+                            this.saveToLocalStorage();
+                            alert('Event added successfully.');
+                        } else {
+                            alert('The time slot is already used or an event is already scheduled at that time.');
+                        }
+                    } else {
+                        alert('Please enter all event details.');
+                    }
+                },
+                viewSchedule: function() {
+                    if (this.events.length === 0) {
+                        alert('No events scheduled.');
+                    } else {
+                        alert('Schedule:\n' + this.events.map(event => `${event.date} ${event.startTime}-${event.endTime} - ${event.name}`).join('\n'));
+                    }
+                },
+                removeSelectedEvent: function() {
+                    if (this.selectedEventIndex !== null) {
+                        if (confirm('Are you sure you want to remove this event?')) {
+                            this.events.splice(this.selectedEventIndex, 1);
+                            this.selectedEventIndex = null;
+                            this.saveToLocalStorage();
+                            alert('Event removed successfully.');
+                        }
+                    } else {
+                        alert('Please select an event to remove.');
+                    }
+                },
+                isAvailable: function(newEvent) {
+                    return !this.events.some(event =>
+                        event.date === newEvent.date &&
+                        ((newEvent.startTime >= event.startTime && newEvent.startTime < event.endTime) ||
+                        (newEvent.endTime > event.startTime && newEvent.endTime <= event.endTime))
+                    );
+                },
+                saveToLocalStorage: function() {
+                    localStorage.setItem('events', JSON.stringify(this.events));
+                },
+                downloadSchedule: function() {
+                    const scheduleText = this.events.map(event => `${event.date} ${event.startTime}-${event.endTime} - ${event.name}`).join('\n');
+                    const blob = new Blob([scheduleText], { type: 'text/plain' });
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = 'schedule.txt';
+                    link.click();
+                }
+            }
+        });
+    </script>
+</body>
+</html>
